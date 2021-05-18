@@ -6,7 +6,15 @@
 //
 
 import UIKit
-struct InventoryData: Decodable {
+
+
+let url = URL(string: "https://maletines.de/inventories")!
+
+struct InventoriesAPIResponse: Codable {
+    let data: [InventoryData]
+}
+
+struct InventoryData: Codable {
 
     // MARK: - Properties
 
@@ -17,10 +25,7 @@ struct InventoryData: Decodable {
 
 }
 
-let url = URL(string: "https://maletines.de/inventories")!
-
 var request = URLRequest(url: url)
-
 
 
 class Inventory: UIViewController, UITableViewDelegate, UITableViewDataSource {
@@ -35,30 +40,41 @@ class Inventory: UIViewController, UITableViewDelegate, UITableViewDataSource {
         ]
     ]
     
+    private func getData(from url: URL) {
+        let task = URLSession.shared.dataTask(	with: url, completionHandler: { data, response, error in
+            guard let data = data, error == nil else {
+                print("something")
+                return
+            }
+            
+            var result: InventoriesAPIResponse?
+            do {
+                result = try JSONDecoder().decode(InventoriesAPIResponse.self, from: data)
+            }
+            catch {
+                print("failed to convert")
+            }
+            
+            guard let json = result else {
+                return
+            }
+            
+            print(json.data)
+            print(json.data[0].product_description)
+        })
+            
+        task.resume()
+    }
     
     @IBOutlet var myTableView: UITableView!
 
         override func viewDidLoad() {
             super.viewDidLoad()
-            request.httpMethod = "GET"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            let task = URLSession.shared.dataTask(with: url) { data, response, error in
-                if let data = data {
-                    do {
-                        // make sure this JSON is in the format we expect
-                        let json = try JSONSerialization.jsonObject(with: data, options: [])
-                        print(json)
-                        
-                    } catch let error as NSError {
-                        print("Failed to load: \(error.localizedDescription)")
-                    }
-                } else if let error = error {
-                    print("HTTP Request Failed \(error)")
-                }
-            }
-            task.resume()
+            
+            getData(from: url)
+            
 //            let barHeight: CGFloat = UIApplication.shared.statusBarFrame.size.height
-//            let displayWidth: CGFloat = self.view.frame.width
+//            let displayWidth: CGFloat = self.view.frame.width	
 //            let displayHeight: CGFloat = self.view.frame.height/2.5
 
             myTableView.register(MyCell.self, forCellReuseIdentifier: "MyCell")
