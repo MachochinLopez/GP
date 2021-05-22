@@ -16,6 +16,14 @@ class InventoryCreate: UIViewController {
         guard let vc = storyboard?.instantiateViewController(identifier: "inventory_vc") as? Inventory else {
             return
         }
+        
+        vc.createProduct(description: "Producto 21", unit_id: 4, completion: {(error) in
+            if let error = error {
+                print("Error al crear el objeto")
+                print(error)
+            }
+        })
+        
         present(vc, animated: true)
     }
 }

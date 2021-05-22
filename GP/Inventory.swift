@@ -33,22 +33,52 @@ class Inventory: UIViewController, UITableViewDelegate, UITableViewDataSource {
     @IBOutlet var myTableView: UITableView!
 
     
-
-        override func viewDidLoad() {
-            postData(from: postUrl)
-            myArray = getData(from: url)
+    func createInventoryEntry(quantity: Int, deposit_id: Int, product_id: Int, completion: (Error?) -> ()) {
+        guard let url = URL(string:"http://maletines.de/add-entry") else { return }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        
+        URLSession.shared.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
+            guard let data = data else { return }
+            print(String(data: data, encoding: .utf8))
+        }).resume()
+    }
+    
+    func createProduct(description: String, unit_id: Int, completion: (Error?) -> ()) {
+        guard let url = URL(string:"http://maletines.de/products") else { return }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        
+        let params = ["description": description, "unit_id": unit_id] as [String : Any]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: params, options: .init())
             
+            urlRequest.httpBody = data
+            urlRequest.setValue("application/json", forHTTPHeaderField: "content-type")
             
-            super.viewDidLoad()
-            myTableView.register(MyCell.self, forCellReuseIdentifier: "MyCell")
-            self.myTableView.dataSource = self
-            self.myTableView.delegate = self
-            self.view.addSubview(self.myTableView)
-//            let barHeight: CGFloat = UIApplication.shared.statusBarFrame.size.height
-//            let displayWidth: CGFloat = self.view.frame.width
-//            let displayHeight: CGFloat = self.view.frame.height/2.5
-            
+            URLSession.shared.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
+                guard let data = data else { return }
+                print(String(data: data, encoding: .utf8))
+            }).resume()
+        } catch {
+            completion(error)
         }
+    }
+
+    override func viewDidLoad() {
+        postData(from: postUrl)
+        myArray = getData(from: url)
+            
+        super.viewDidLoad()
+        myTableView.register(MyCell.self, forCellReuseIdentifier: "MyCell")
+        self.myTableView.dataSource = self
+        self.myTableView.delegate = self
+        self.view.addSubview(self.myTableView)
+//      let barHeight: CGFloat = UIApplication.shared.statusBarFrame.size.height
+//      let displayWidth: CGFloat = self.view.frame.width
+//      let displayHeight: CGFloat = self.view.frame.height/2.5
+            
+    }
 
         func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
             guard let vc = storyboard?.instantiateViewController(identifier: "inventoryEdit_vc") as? InventoryEdit else {
